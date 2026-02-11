@@ -1,0 +1,7 @@
+{
+  "name": "Academy of Trade Finance - Digital Transformation",
+  "description": "An ultra-minimalist, high-performance web application for the Academy of Trade Finance, featuring a premium Apple-inspired design system, bento grids, and comprehensive course modules.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
