@@ -48,6 +48,12 @@ const App: React.FC = () => {
   }, [currentPath]);
 
   const handleAddToCart = (course: Course) => {
+    // Check if user is logged in before allowing enrollment
+    if (!user) {
+      setCurrentPath('account');
+      return;
+    }
+    
     if (!cart.some(item => item.id === course.id)) {
       setCart([...cart, course]);
     }
@@ -101,7 +107,7 @@ const App: React.FC = () => {
       );
     }
 
-    if (currentPath === 'home') return <Home onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
+    if (currentPath === 'home') return <Home user={user} onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
     if (currentPath === 'about') return <About />;
     if (currentPath === 'contact') return <Contact />;
     if (currentPath === 'cart') return <CartPage cart={cart} onRemove={handleRemoveFromCart} onNavigate={setCurrentPath} />;
@@ -128,6 +134,7 @@ const App: React.FC = () => {
       const course = COURSES.find(c => c.id === courseId);
       if (course) return (
         <CoursePage 
+          user={user}
           course={course} 
           onAddToCart={handleAddToCart} 
           onNavigate={setCurrentPath}
@@ -135,7 +142,7 @@ const App: React.FC = () => {
       );
     }
 
-    return <Home onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
+    return <Home user={user} onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
   };
 
   return (

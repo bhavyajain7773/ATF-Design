@@ -1,16 +1,17 @@
 
 import React from 'react';
-import { Course } from '../types';
+import { Course, User } from '../types';
 import { APPLY_URL } from '../constants';
 import { CheckCircle2, ListChecks, CreditCard, ShoppingCart, ArrowLeft } from 'lucide-react';
 
 interface CoursePageProps {
+  user: User | null;
   course: Course;
   onAddToCart: (course: Course) => void;
   onNavigate: (path: string) => void;
 }
 
-const CoursePage: React.FC<CoursePageProps> = ({ course, onAddToCart, onNavigate }) => {
+const CoursePage: React.FC<CoursePageProps> = ({ user, course, onAddToCart, onNavigate }) => {
   return (
     <div className="pt-32 pb-20 px-6">
       <div className="max-w-5xl mx-auto">
@@ -87,7 +88,7 @@ const CoursePage: React.FC<CoursePageProps> = ({ course, onAddToCart, onNavigate
                   onClick={() => onAddToCart(course)}
                   className="w-full flex items-center justify-center gap-3 bg-black text-white py-5 rounded-[2rem] font-bold hover:bg-slate-800 transition-all transform active:scale-[0.98]"
                 >
-                  <ShoppingCart size={20} /> Enroll Now
+                  <ShoppingCart size={20} /> {user ? 'Enroll Now' : 'Login to Enroll'}
                 </button>
                 <a 
                   href={APPLY_URL}

@@ -3,14 +3,15 @@ import React from 'react';
 import { BentoGrid, BentoCard } from '../components/BentoGrid';
 import { COURSES, APPLY_URL } from '../constants';
 import { ArrowRight, Globe, ShieldCheck, Zap, ShoppingCart } from 'lucide-react';
-import { Course } from '../types';
+import { Course, User } from '../types';
 
 interface HomeProps {
+  user: User | null;
   onNavigate: (path: string) => void;
   onAddToCart: (course: Course) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ onNavigate, onAddToCart }) => {
+const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
   return (
     <div className="pt-32 pb-20">
       {/* Hero Section */}
@@ -125,7 +126,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate, onAddToCart }) => {
                   onClick={(e) => { e.stopPropagation(); onAddToCart(course); }}
                   className="flex items-center gap-2 bg-slate-50 px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all transform active:scale-95"
                 >
-                  <ShoppingCart size={14} /> Buy Now
+                  <ShoppingCart size={14} /> {user ? 'Buy Now' : 'Login to Buy'}
                 </button>
               </div>
             </BentoCard>
