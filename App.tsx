@@ -5,75 +5,160 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import CoursePage from './pages/CoursePage';
+import CartPage from './pages/CartPage';
+import CheckoutPage from './pages/CheckoutPage';
+import AccountPage from './pages/AccountPage';
 import { COURSES } from './constants';
+import { Course, Order, User } from './types';
 
 const App: React.FC = () => {
-  // Simple state-based routing for a single-page feel without path manipulation
   const [currentPath, setCurrentPath] = useState('home');
+  const [cart, setCart] = useState<Course[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  // Initialize state from LocalStorage
+  useEffect(() => {
+    const savedCart = localStorage.getItem('atf_cart');
+    const savedUser = localStorage.getItem('atf_user');
+    const savedOrders = localStorage.getItem('atf_orders');
+
+    if (savedCart) setCart(JSON.parse(savedCart));
+    if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedOrders) setOrders(JSON.parse(savedOrders));
+  }, []);
+
+  // Persist state to LocalStorage
+  useEffect(() => {
+    localStorage.setItem('atf_cart', JSON.stringify(cart));
+  }, [cart]);
 
   useEffect(() => {
-    // Scroll to top on navigation
+    if (user) localStorage.setItem('atf_user', JSON.stringify(user));
+    else localStorage.removeItem('atf_user');
+  }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem('atf_orders', JSON.stringify(orders));
+  }, [orders]);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPath]);
 
+  const handleAddToCart = (course: Course) => {
+    if (!cart.some(item => item.id === course.id)) {
+      setCart([...cart, course]);
+    }
+    setCurrentPath('cart');
+  };
+
+  const handleRemoveFromCart = (id: string) => {
+    setCart(cart.filter(item => item.id !== id));
+  };
+
+  const handleCompleteOrder = (order: Order) => {
+    setOrders([order, ...orders]);
+    setCart([]); // Clear cart after success
+  };
+
+  const handleLogin = (newUser: User) => {
+    setUser(newUser);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentPath('home');
+  };
+
   const renderPage = () => {
-    if (currentPath === 'home') return <Home onNavigate={setCurrentPath} />;
+    if (currentPath === 'home') return <Home onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
     if (currentPath === 'about') return <About />;
     if (currentPath === 'contact') return <Contact />;
+    if (currentPath === 'cart') return <CartPage cart={cart} onRemove={handleRemoveFromCart} onNavigate={setCurrentPath} />;
+    if (currentPath === 'checkout') return (
+      <CheckoutPage 
+        cart={cart} 
+        user={user} 
+        onCompleteOrder={handleCompleteOrder} 
+        onNavigate={setCurrentPath} 
+      />
+    );
+    if (currentPath === 'account') return (
+      <AccountPage 
+        user={user} 
+        orders={orders} 
+        onLogin={handleLogin} 
+        onLogout={handleLogout} 
+      />
+    );
     
     if (currentPath.startsWith('course-')) {
       const courseId = currentPath.replace('course-', '');
       const course = COURSES.find(c => c.id === courseId);
-      if (course) return <CoursePage course={course} />;
+      if (course) return (
+        <CoursePage 
+          course={course} 
+          onAddToCart={handleAddToCart} 
+          onNavigate={setCurrentPath}
+        />
+      );
     }
 
-    return <Home onNavigate={setCurrentPath} />;
+    return <Home onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
   };
 
   return (
-    <div className="min-h-screen flex flex-col selection:bg-black selection:text-white">
-      <Navbar currentPath={currentPath} onNavigate={setCurrentPath} />
+    <div className="min-h-screen flex flex-col selection:bg-black selection:text-white relative">
+      <Navbar 
+        currentPath={currentPath} 
+        onNavigate={setCurrentPath} 
+        cartCount={cart.length} 
+      />
       <main className="flex-grow">
         {renderPage()}
       </main>
       
-      <footer className="bg-white border-t border-slate-100 py-16 px-6">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
-          <div>
-            <h2 className="text-3xl font-extrabold tracking-tighter mb-4">ATF.</h2>
-            <p className="text-slate-400 font-medium max-w-xs">
-              Academy of Trade Finance. Bridging global financial standards with localized mentorship excellence.
+      <footer className="bg-white border-t border-slate-100 py-20 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16">
+          <div className="max-w-sm">
+            <h2 className="text-4xl font-extrabold tracking-tighter mb-6">ATF.</h2>
+            <p className="text-slate-400 font-medium leading-relaxed">
+              Academy of Trade Finance. A premier institutional bridge for masters of global capital, operating from Jodhpur to the world.
             </p>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Navigation</h4>
-              <ul className="space-y-2 text-sm font-semibold text-slate-600">
-                <li><button onClick={() => setCurrentPath('home')} className="hover:text-black">Home</button></li>
-                <li><button onClick={() => setCurrentPath('about')} className="hover:text-black">About</button></li>
-                <li><button onClick={() => setCurrentPath('contact')} className="hover:text-black">Contact</button></li>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-6">Explore</h4>
+              <ul className="space-y-3 text-sm font-semibold text-slate-600">
+                <li><button onClick={() => setCurrentPath('home')} className="hover:text-black">Catalog</button></li>
+                <li><button onClick={() => setCurrentPath('about')} className="hover:text-black">Methodology</button></li>
+                <li><button onClick={() => setCurrentPath('account')} className="hover:text-black">Student Portal</button></li>
               </ul>
             </div>
             <div className="hidden md:block">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Course Levels</h4>
-              <ul className="space-y-2 text-sm font-semibold text-slate-600">
-                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-black"></div> Top Level</li>
-                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div> Middle Level</li>
-                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> Bottom Level</li>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-6">Frameworks</h4>
+              <ul className="space-y-3 text-sm font-semibold text-slate-600">
+                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-black"></div> UCP 600</li>
+                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-400"></div> SWIFT v8</li>
+                <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-slate-200"></div> ISBP 745</li>
               </ul>
             </div>
             <div>
-              <h4 className="text-xs font-bold uppercase tracking-widest text-slate-300 mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm font-semibold text-slate-600">
-                <li>Privacy Policy</li>
-                <li>Terms of Service</li>
+              <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-6">Governance</h4>
+              <ul className="space-y-3 text-sm font-semibold text-slate-600">
+                <li>Privacy Protocols</li>
+                <li>Terms of Mastery</li>
               </ul>
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-50 text-slate-400 text-[10px] font-bold uppercase tracking-widest flex flex-col sm:flex-row justify-between gap-4">
-          <p>© {new Date().getFullYear()} Academy of Trade Finance. Built for the modern banker.</p>
-          <p>18, Shastri Circle, Jodhpur, RJ - 342001</p>
+        <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-slate-50 text-slate-400 text-[9px] font-bold uppercase tracking-[0.3em] flex flex-col sm:flex-row justify-between gap-6">
+          <p>© {new Date().getFullYear()} Academy of Trade Finance. All Rights Reserved.</p>
+          <div className="flex gap-8">
+            <p>18, Shastri Circle, Jodhpur</p>
+            <p>contact@atf.edu.in</p>
+          </div>
         </div>
       </footer>
     </div>

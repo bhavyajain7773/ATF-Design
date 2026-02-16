@@ -17,7 +17,7 @@ export const COURSES: Course[] = [
       { section: 'Letter of Credit', topics: ['Types of LC', 'UCP 600 Articles', 'Document Examination'] },
       { section: 'Bank Guarantees', topics: ['Standby LCs', 'Demand Guarantees', 'URDG 758'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   },
   {
     id: 'intl-banking',
@@ -33,7 +33,7 @@ export const COURSES: Course[] = [
       { section: 'Banking Systems', topics: ['Global Regulatory Framework', 'Central Banking Operations'] },
       { section: 'Operations', topics: ['SWIFT Messaging', 'Nostro/Vostro Accounts', 'Remittance'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   },
   {
     id: 'treasury-risk',
@@ -49,7 +49,7 @@ export const COURSES: Course[] = [
       { section: 'Treasury Operations', topics: ['Front Office vs Back Office', 'Cash Management'] },
       { section: 'Risk Management', topics: ['Market Risk', 'Credit Risk', 'Operational Risk'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   },
   {
     id: 'forex',
@@ -65,7 +65,7 @@ export const COURSES: Course[] = [
       { section: 'Forex Basics', topics: ['Currency Pairs', 'Exchange Rate Determination'] },
       { section: 'Individual Facilities', topics: ['LRS Guidelines', 'Travel Forex', 'NR Management'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   },
   {
     id: 'stock-market',
@@ -81,7 +81,7 @@ export const COURSES: Course[] = [
       { section: 'Technical Analysis', topics: ['Candlestick Patterns', 'Trend Analysis', 'Indicators'] },
       { section: 'Fundamental Analysis', topics: ['Balance Sheet Reading', 'Ratio Analysis'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   },
   {
     id: 'research-analyst',
@@ -97,8 +97,9 @@ export const COURSES: Course[] = [
       { section: 'Analysis Process', topics: ['Economic Analysis', 'Industry Analysis', 'Company Valuation'] },
       { section: 'Compliance', topics: ['SEBI Regulations', 'Ethics in Research'] }
     ],
-    price: 'Contact for Pricing'
+    price: 20
   }
 ];
 
 export const APPLY_URL = "https://wa.me/918209850312";
+export const ENROLLMENT_PORTAL = "https://t.me/atf_enrollment_portal";

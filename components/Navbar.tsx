@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { COURSES, APPLY_URL } from '../constants';
-import { ChevronDown, Menu, X } from 'lucide-react';
+import { ChevronDown, Menu, X, ShoppingCart, User } from 'lucide-react';
 
 interface NavbarProps {
   onNavigate: (path: string) => void;
   currentPath: string;
+  cartCount: number;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
+const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -25,7 +26,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
 
   const linkClasses = (path: string) => `
     px-4 py-2 text-sm font-medium transition-colors hover:text-black
-    ${currentPath === path ? 'text-black' : 'text-slate-500'}
+    ${currentPath === path ? 'text-black font-bold' : 'text-slate-500'}
   `;
 
   return (
@@ -75,13 +76,35 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Cart Button */}
+        <button 
+          onClick={() => onNavigate('cart')}
+          className="relative p-2 text-slate-500 hover:text-black transition-colors"
+        >
+          <ShoppingCart size={20} />
+          {cartCount > 0 && (
+            <span className="absolute -top-1 -right-1 bg-black text-white text-[8px] font-bold h-4 w-4 flex items-center justify-center rounded-full border border-white">
+              {cartCount}
+            </span>
+          )}
+        </button>
+
+        {/* Account Button */}
+        <button 
+          onClick={() => onNavigate('account')}
+          className="p-2 text-slate-500 hover:text-black transition-colors"
+        >
+          <User size={20} />
+        </button>
+
         <a 
           href={APPLY_URL}
-          className="hidden md:block bg-black text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-800 transition-all transform active:scale-95"
+          className="hidden md:block bg-black text-white px-6 py-2 rounded-full text-sm font-semibold hover:bg-slate-800 transition-all transform active:scale-95 ml-2"
         >
           Apply Now
         </a>
+        
         <button 
           className="md:hidden p-2 text-slate-900"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -95,6 +118,8 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath }) => {
         <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-100 p-6 md:hidden flex flex-col gap-4 shadow-xl">
           <button onClick={() => { onNavigate('home'); setIsMenuOpen(false); }} className="text-left text-lg font-medium">Home</button>
           <button onClick={() => { onNavigate('about'); setIsMenuOpen(false); }} className="text-left text-lg font-medium">About</button>
+          <button onClick={() => { onNavigate('cart'); setIsMenuOpen(false); }} className="text-left text-lg font-medium">Cart ({cartCount})</button>
+          <button onClick={() => { onNavigate('account'); setIsMenuOpen(false); }} className="text-left text-lg font-medium">Account</button>
           <div className="py-2 border-y border-slate-50">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Our Programs</p>
             <div className="grid gap-4">
