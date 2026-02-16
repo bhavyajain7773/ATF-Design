@@ -17,19 +17,26 @@ const App: React.FC = () => {
   const [cart, setCart] = useState<Course[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
 
-  // Initialize state from LocalStorage
+  // Initialize state from LocalStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem('atf_cart');
-    const savedUser = localStorage.getItem('atf_user');
-    const savedOrders = localStorage.getItem('atf_orders');
+    try {
+      const savedCart = localStorage.getItem('atf_cart');
+      const savedUser = localStorage.getItem('atf_user');
+      const savedOrders = localStorage.getItem('atf_orders');
+      const savedUsersList = localStorage.getItem('atf_users_list');
 
-    if (savedCart) setCart(JSON.parse(savedCart));
-    if (savedUser) setUser(JSON.parse(savedUser));
-    if (savedOrders) setOrders(JSON.parse(savedOrders));
+      if (savedCart) setCart(JSON.parse(savedCart));
+      if (savedUser) setUser(JSON.parse(savedUser));
+      if (savedOrders) setOrders(JSON.parse(savedOrders));
+      if (savedUsersList) setRegisteredUsers(JSON.parse(savedUsersList));
+    } catch (e) {
+      console.error("Failed to load persistence layer", e);
+    }
   }, []);
 
-  // Persist state to LocalStorage
+  // Persistence Effects
   useEffect(() => {
     localStorage.setItem('atf_cart', JSON.stringify(cart));
   }, [cart]);
@@ -44,16 +51,18 @@ const App: React.FC = () => {
   }, [orders]);
 
   useEffect(() => {
+    localStorage.setItem('atf_users_list', JSON.stringify(registeredUsers));
+  }, [registeredUsers]);
+
+  useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentPath]);
 
   const handleAddToCart = (course: Course) => {
-    // Check if user is logged in before allowing enrollment
     if (!user) {
       setCurrentPath('account');
       return;
     }
-    
     if (!cart.some(item => item.id === course.id)) {
       setCart([...cart, course]);
     }
@@ -65,16 +74,28 @@ const App: React.FC = () => {
   };
 
   const handleCompleteOrder = (order: Order) => {
-    setOrders([order, ...orders]);
-    setCart([]); // Clear cart after success
+    const enhancedOrder = {
+      ...order,
+      userName: user?.name,
+      userEmail: user?.email
+    };
+    setOrders(prev => [enhancedOrder, ...prev]);
+    setCart([]);
   };
 
   const handleLogin = (newUser: User) => {
     setUser(newUser);
+    // Persist to global directory (simulate database registration)
+    setRegisteredUsers(prev => {
+      const exists = prev.find(u => u.email === newUser.email);
+      if (!exists) {
+        return [...prev, newUser];
+      }
+      return prev;
+    });
   };
 
   const handleAdminLogin = (id: string, pass: string): boolean => {
-    // Updated credentials as per user request
     if (id === 'Panipuri05' && pass === 'Panipuri05') {
       const adminUser: User = {
         id: 'ADMIN-PANIPURI',
@@ -91,18 +112,33 @@ const App: React.FC = () => {
   };
 
   const handleLogout = () => {
+    // Only clear the session and current cart
+    // Keep registeredUsers and orders so they are "saved" for the Admin
     setUser(null);
+    setCart([]);
     setCurrentPath('home');
   };
 
+  const purgeDatabase = () => {
+    // This is the "Everything is empty" master switch requested
+    setOrders([]);
+    setRegisteredUsers([]);
+    setCart([]);
+    localStorage.removeItem('atf_orders');
+    localStorage.removeItem('atf_users_list');
+    localStorage.removeItem('atf_cart');
+    alert("Institutional Database has been purged.");
+  };
+
   const renderPage = () => {
-    // Admin Override
     if (currentPath === 'admin' && user?.isAdmin) {
       return (
         <AdminDashboard 
           orders={orders} 
+          users={registeredUsers}
           onNavigate={setCurrentPath} 
           onLogout={handleLogout} 
+          onPurge={purgeDatabase}
         />
       );
     }
@@ -122,7 +158,7 @@ const App: React.FC = () => {
     if (currentPath === 'account') return (
       <AccountPage 
         user={user} 
-        orders={orders.filter(o => o.userId === user?.id || o.userId === 'guest')} 
+        orders={orders.filter(o => o.userEmail === user?.email)} 
         onLogin={handleLogin} 
         onLogout={handleLogout}
         onAdminLogin={handleAdminLogin}
@@ -147,7 +183,6 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col selection:bg-black selection:text-white relative">
-      {/* Conditionally hide Navbar in Admin view for a full-screen app feel */}
       {currentPath !== 'admin' && (
         <Navbar 
           currentPath={currentPath} 
@@ -155,11 +190,7 @@ const App: React.FC = () => {
           cartCount={cart.length} 
         />
       )}
-      
-      <main className="flex-grow">
-        {renderPage()}
-      </main>
-      
+      <main className="flex-grow">{renderPage()}</main>
       {currentPath !== 'admin' && (
         <footer className="bg-white border-t border-slate-100 py-20 px-6">
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16">
@@ -194,13 +225,6 @@ const App: React.FC = () => {
                   <li><button onClick={() => setCurrentPath('account')} className="text-slate-300 hover:text-black transition-colors">Admin Hub</button></li>
                 </ul>
               </div>
-            </div>
-          </div>
-          <div className="max-w-7xl mx-auto mt-20 pt-10 border-t border-slate-50 text-slate-400 text-[9px] font-bold uppercase tracking-[0.3em] flex flex-col sm:flex-row justify-between gap-6">
-            <p>© {new Date().getFullYear()} Academy of Trade Finance. All Rights Reserved.</p>
-            <div className="flex gap-8">
-              <p>18, Shastri Circle, Jodhpur</p>
-              <p>contact@atf.edu.in</p>
             </div>
           </div>
         </footer>

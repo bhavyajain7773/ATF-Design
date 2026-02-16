@@ -21,6 +21,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
+  password?: string; // Added for Admin Visibility
   address?: string;
   isAdmin?: boolean;
 }

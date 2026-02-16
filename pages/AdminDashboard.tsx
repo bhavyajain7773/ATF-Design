@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Order, User, AdminStats } from '../types';
 import { 
   BarChart3, 
@@ -8,18 +8,23 @@ import {
   TrendingUp, 
   ArrowLeft, 
   Search,
-  CheckCircle2,
-  Clock,
-  MoreVertical
+  Database,
+  History,
+  AlertTriangle,
+  Lock
 } from 'lucide-react';
 
 interface AdminDashboardProps {
   orders: Order[];
+  users: User[];
   onNavigate: (path: string) => void;
   onLogout: () => void;
+  onPurge: () => void;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onLogout }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, users, onNavigate, onLogout, onPurge }) => {
+  const [activeTab, setActiveTab] = useState<'orders' | 'users'>('orders');
+
   const stats: AdminStats = useMemo(() => {
     const revenue = orders.reduce((acc, curr) => acc + curr.total, 0);
     const popularity: { [key: string]: number } = {};
@@ -30,14 +35,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onL
       });
     });
 
-    // Mocking user count for demo
     return {
       totalRevenue: revenue,
       totalOrders: orders.length,
-      totalUsers: Math.max(orders.length, 12),
+      totalUsers: users.length,
       coursePopularity: popularity
     };
-  }, [orders]);
+  }, [orders, users]);
 
   return (
     <div className="pt-24 min-h-screen bg-slate-50">
@@ -52,16 +56,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onL
             </button>
             <h1 className="text-xl font-black tracking-tighter">ATF Central Command.</h1>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden md:flex items-center gap-2 px-4 py-2 bg-slate-100 rounded-full">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Systems Operational</span>
-            </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={onPurge}
+              className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-600 transition-colors bg-red-50/50 px-4 py-2 rounded-full border border-red-100"
+            >
+              <AlertTriangle size={12} /> System Reset
+            </button>
             <button 
               onClick={onLogout}
-              className="text-xs font-bold text-red-500 uppercase tracking-widest hover:bg-red-50 px-4 py-2 rounded-xl transition-all"
+              className="text-xs font-bold text-slate-900 uppercase tracking-widest hover:bg-slate-50 px-4 py-2 rounded-xl transition-all"
             >
-              Logout
+              Logout Session
             </button>
           </div>
         </div>
@@ -72,10 +78,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onL
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
-                <TrendingUp size={24} />
-              </div>
-              <span className="text-xs font-bold text-green-500">+12%</span>
+              <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><TrendingUp size={24} /></div>
             </div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Revenue</p>
             <h3 className="text-3xl font-black">{stats.totalRevenue}Rs</h3>
@@ -83,9 +86,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onL
 
           <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
-                <ShoppingBag size={24} />
-              </div>
+              <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl"><ShoppingBag size={24} /></div>
             </div>
             <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Enrollments</p>
             <h3 className="text-3xl font-black">{stats.totalOrders}</h3>
@@ -93,127 +94,115 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ orders, onNavigate, onL
 
           <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl">
-                <Users size={24} />
-              </div>
+              <div className="p-3 bg-orange-50 text-orange-600 rounded-2xl"><Users size={24} /></div>
             </div>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Institutional Users</p>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Registered Users</p>
             <h3 className="text-3xl font-black">{stats.totalUsers}</h3>
           </div>
 
           <div className="bg-white p-8 rounded-[2rem] border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
-                <BarChart3 size={24} />
-              </div>
+              <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><Database size={24} /></div>
             </div>
-            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Conversion Rate</p>
-            <h3 className="text-3xl font-black">4.8%</h3>
+            <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Persisted Records</p>
+            <h3 className="text-3xl font-black">{users.length + orders.length} Objects</h3>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Recent Orders */}
-          <div className="lg:col-span-2 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
-            <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-              <h2 className="text-xl font-bold">Recent Institutional Flows</h2>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-                <input 
-                  type="text" 
-                  placeholder="Filter transactions..." 
-                  className="pl-10 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-black/5"
-                />
-              </div>
+        {/* Dynamic Data Table */}
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-8 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl">
+              <button 
+                onClick={() => setActiveTab('orders')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                  activeTab === 'orders' ? 'bg-white text-black shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <History size={16} /> History
+              </button>
+              <button 
+                onClick={() => setActiveTab('users')}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+                  activeTab === 'users' ? 'bg-white text-black shadow-sm' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <Users size={16} /> Directory
+              </button>
             </div>
-            <div className="overflow-x-auto">
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-50 text-green-600 rounded-full">
+              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+              <span className="text-[10px] font-black uppercase tracking-widest">Live Persistence On</span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {activeTab === 'orders' ? (
               <table className="w-full text-left">
                 <thead>
                   <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
                     <th className="px-8 py-4">Transaction ID</th>
-                    <th className="px-8 py-4">Status</th>
+                    <th className="px-8 py-4">User Details</th>
                     <th className="px-8 py-4">Amount</th>
-                    <th className="px-8 py-4">Method</th>
-                    <th className="px-8 py-4"></th>
+                    <th className="px-8 py-4">Enrollment Date</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-8 py-20 text-center text-slate-400 italic">No historical flows detected.</td>
-                    </tr>
+                    <tr><td colSpan={4} className="px-8 py-20 text-center text-slate-400 italic">No real-time transactions detected.</td></tr>
                   ) : (
                     orders.map((order) => (
                       <tr key={order.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-6 text-sm font-bold text-slate-900">{order.id}</td>
                         <td className="px-8 py-6">
-                          <p className="text-sm font-bold text-slate-900">{order.id}</p>
-                          <p className="text-[10px] text-slate-400 font-medium">{order.date}</p>
-                        </td>
-                        <td className="px-8 py-6">
-                          <div className="flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                            <span className="text-xs font-bold uppercase tracking-widest text-slate-700">{order.status}</span>
-                          </div>
+                          <p className="text-sm font-semibold">{order.userName}</p>
+                          <p className="text-[10px] text-slate-400">{order.userEmail}</p>
                         </td>
                         <td className="px-8 py-6 font-black text-slate-900">{order.total}Rs</td>
-                        <td className="px-8 py-6 text-xs text-slate-500 font-bold uppercase">{order.paymentMethod}</td>
-                        <td className="px-8 py-6">
-                          <button className="p-2 hover:bg-white rounded-lg transition-all border border-transparent hover:border-slate-200">
-                            <MoreVertical size={16} className="text-slate-400" />
-                          </button>
-                        </td>
+                        <td className="px-8 py-6 text-xs text-slate-500">{order.date}</td>
                       </tr>
                     ))
                   )}
                 </tbody>
               </table>
-            </div>
-          </div>
-
-          {/* Popular Courses Sidebar */}
-          <div className="space-y-8">
-            <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-sm">
-              <h2 className="text-xl font-bold mb-8">Popular Programs</h2>
-              <div className="space-y-6">
-                {Object.entries(stats.coursePopularity)
-                  .sort(([,a], [,b]) => b - a)
-                  .map(([title, count], i) => (
-                    <div key={title} className="flex items-center justify-between group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-8 h-8 flex items-center justify-center bg-slate-900 text-white rounded-lg text-xs font-bold">
-                          0{i+1}
-                        </div>
-                        <span className="text-sm font-bold text-slate-700 truncate max-w-[150px]">{title}</span>
-                      </div>
-                      <span className="text-xs font-black px-3 py-1 bg-slate-100 rounded-full group-hover:bg-black group-hover:text-white transition-all">
-                        {count}
-                      </span>
-                    </div>
-                  ))}
-              </div>
-            </div>
-
-            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl overflow-hidden relative">
-              <div className="relative z-10">
-                <h3 className="text-lg font-bold mb-2">Institutional Health</h3>
-                <p className="text-slate-400 text-xs mb-6">Real-time sync with Rajasthan Banking Node</p>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <CheckCircle2 size={16} className="text-green-400" />
-                    <span className="text-xs font-medium">Gateway: Active</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <CheckCircle2 size={16} className="text-green-400" />
-                    <span className="text-xs font-medium">Database: Encrypted</span>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Clock size={16} className="text-blue-400" />
-                    <span className="text-xs font-medium">Next Backup: 4h 20m</span>
-                  </div>
-                </div>
-              </div>
-              <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl"></div>
-            </div>
+            ) : (
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-slate-50/50 text-slate-400 text-[10px] font-bold uppercase tracking-widest">
+                    <th className="px-8 py-4">Identity</th>
+                    <th className="px-8 py-4">Email Address</th>
+                    <th className="px-8 py-4">Security Credentials</th>
+                    <th className="px-8 py-4">Status</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {users.length === 0 ? (
+                    <tr><td colSpan={4} className="px-8 py-20 text-center text-slate-400 italic">No students registered in database.</td></tr>
+                  ) : (
+                    users.map((user) => (
+                      <tr key={user.id} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center text-xs font-bold">
+                              {user.name.charAt(0)}
+                            </div>
+                            <p className="text-sm font-bold text-slate-900">{user.name}</p>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-sm text-slate-600">{user.email}</td>
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg w-fit">
+                            <Lock size={12} className="text-slate-400" />
+                            <span className="text-xs font-mono font-bold text-slate-600">{user.password || 'N/A'}</span>
+                          </div>
+                        </td>
+                        <td className="px-8 py-6 text-[10px] font-black uppercase text-green-500 tracking-widest">Active Member</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
       </main>
