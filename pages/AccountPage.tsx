@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Order } from '../types';
-import { LogOut, Package, History, ExternalLink, UserCircle, Mail, MapPin, Key } from 'lucide-react';
+import { LogOut, Package, History, ExternalLink, UserCircle, Mail, MapPin, ShieldAlert } from 'lucide-react';
 import { ENROLLMENT_PORTAL } from '../constants';
 
 interface AccountPageProps {
@@ -9,15 +9,28 @@ interface AccountPageProps {
   orders: Order[];
   onLogin: (user: User) => void;
   onLogout: () => void;
+  onAdminLogin: (id: string, pass: string) => boolean;
 }
 
-const AccountPage: React.FC<AccountPageProps> = ({ user, orders, onLogin, onLogout }) => {
+const AccountPage: React.FC<AccountPageProps> = ({ user, orders, onLogin, onLogout, onAdminLogin }) => {
   const [isRegister, setIsRegister] = useState(false);
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', adminId: '', adminPass: '' });
+  const [error, setError] = useState('');
 
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulate auth
+    setError('');
+
+    if (isAdminMode) {
+      const success = onAdminLogin(formData.adminId, formData.adminPass);
+      if (!success) {
+        setError('Invalid Institutional Credentials');
+      }
+      return;
+    }
+
+    // Simulate standard user auth
     onLogin({
       id: 'USR-' + Math.floor(Math.random() * 10000),
       name: formData.name || 'John Doe',
@@ -32,61 +45,110 @@ const AccountPage: React.FC<AccountPageProps> = ({ user, orders, onLogin, onLogo
         <div className="max-w-md mx-auto">
           <div className="bg-white border border-slate-100 rounded-[3rem] p-12 shadow-2xl shadow-slate-200/50">
             <header className="text-center mb-10">
-              <div className="w-20 h-20 bg-slate-900 text-white rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                <UserCircle size={40} />
+              <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transition-colors duration-500 ${
+                isAdminMode ? 'bg-red-500 text-white' : 'bg-slate-900 text-white'
+              }`}>
+                {isAdminMode ? <ShieldAlert size={40} /> : <UserCircle size={40} />}
               </div>
               <h1 className="text-3xl font-black tracking-tighter mb-2">
-                {isRegister ? 'Create Profile.' : 'Welcome Back.'}
+                {isAdminMode ? 'Institutional Command.' : isRegister ? 'Create Profile.' : 'Welcome Back.'}
               </h1>
-              <p className="text-slate-400 text-sm font-medium">Access your professional dashboard.</p>
+              <p className="text-slate-400 text-sm font-medium">
+                {isAdminMode ? 'Authorized personnel only.' : 'Access your professional dashboard.'}
+              </p>
             </header>
 
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 text-red-500 rounded-2xl text-xs font-bold text-center animate-shake">
+                {error}
+              </div>
+            )}
+
             <form onSubmit={handleAuth} className="space-y-6">
-              {isRegister && (
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Full Name</label>
-                  <input 
-                    required 
-                    type="text" 
-                    placeholder="Jane Smith"
-                    className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
-                    onChange={e => setFormData({...formData, name: e.target.value})}
-                  />
-                </div>
+              {!isAdminMode ? (
+                <>
+                  {isRegister && (
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Full Name</label>
+                      <input 
+                        required 
+                        type="text" 
+                        placeholder="Jane Smith"
+                        className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
+                        onChange={e => setFormData({...formData, name: e.target.value})}
+                      />
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Email Address</label>
+                    <input 
+                      required 
+                      type="email" 
+                      placeholder="jane@academy.edu"
+                      className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
+                      onChange={e => setFormData({...formData, email: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Password</label>
+                    <input 
+                      required 
+                      type="password" 
+                      placeholder="••••••••"
+                      className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Unique Admin ID</label>
+                    <input 
+                      required 
+                      type="text" 
+                      placeholder="Enter ID"
+                      className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-red-500/10"
+                      onChange={e => setFormData({...formData, adminId: e.target.value})}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Security Key</label>
+                    <input 
+                      required 
+                      type="password" 
+                      placeholder="••••••••"
+                      className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-red-500/10"
+                      onChange={e => setFormData({...formData, adminPass: e.target.value})}
+                    />
+                  </div>
+                </>
               )}
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Email Address</label>
-                <input 
-                  required 
-                  type="email" 
-                  placeholder="jane@academy.edu"
-                  className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
-                  onChange={e => setFormData({...formData, email: e.target.value})}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Password</label>
-                <input 
-                  required 
-                  type="password" 
-                  placeholder="••••••••"
-                  className="w-full px-8 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:bg-white focus:ring-2 focus:ring-black/5"
-                />
-              </div>
+
               <button 
                 type="submit"
-                className="w-full bg-black text-white py-5 rounded-2xl font-bold hover:bg-slate-800 transition-all transform active:scale-[0.98]"
+                className={`w-full py-5 rounded-2xl font-bold transition-all transform active:scale-[0.98] ${
+                  isAdminMode ? 'bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20' : 'bg-black text-white hover:bg-slate-800'
+                }`}
               >
-                {isRegister ? 'Initialize Account' : 'Secure Login'}
+                {isAdminMode ? 'Verify Authority' : isRegister ? 'Initialize Account' : 'Secure Login'}
               </button>
             </form>
 
-            <div className="mt-8 text-center">
+            <div className="mt-8 flex flex-col items-center gap-4">
               <button 
-                onClick={() => setIsRegister(!isRegister)}
+                onClick={() => { setIsRegister(!isRegister); setIsAdminMode(false); }}
                 className="text-xs font-bold text-slate-400 hover:text-black uppercase tracking-widest transition-all"
               >
-                {isRegister ? 'Already have an account? Login' : 'New to ATF? Register'}
+                {!isAdminMode && (isRegister ? 'Already have an account? Login' : 'New to ATF? Register')}
+              </button>
+              
+              <button 
+                onClick={() => { setIsAdminMode(!isAdminMode); setIsRegister(false); setError(''); }}
+                className={`text-[10px] font-black uppercase tracking-[0.2em] transition-all px-6 py-2 rounded-full border ${
+                  isAdminMode ? 'text-black border-black' : 'text-slate-300 border-slate-100 hover:text-slate-500 hover:border-slate-200'
+                }`}
+              >
+                {isAdminMode ? 'Back to Student Login' : 'Admin Access Area'}
               </button>
             </div>
           </div>

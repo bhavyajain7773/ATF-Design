@@ -8,7 +8,7 @@ export interface Course {
     section: string;
     topics: string[];
   }[];
-  price: number; // Changed to number for calculations
+  price: number;
   level: 'Top' | 'Middle' | 'Bottom';
 }
 
@@ -22,17 +22,27 @@ export interface User {
   email: string;
   phone: string;
   address?: string;
+  isAdmin?: boolean;
 }
 
 export interface Order {
   id: string;
   userId: string;
+  userName?: string;
+  userEmail?: string;
   items: Course[];
   total: number;
   date: string;
   status: 'Processing' | 'Shipped' | 'Delivered' | 'Enrolled';
   paymentMethod: string;
   trackingNumber: string;
+}
+
+export interface AdminStats {
+  totalRevenue: number;
+  totalOrders: number;
+  totalUsers: number;
+  coursePopularity: { [key: string]: number };
 }
 
 export interface NavItem {
