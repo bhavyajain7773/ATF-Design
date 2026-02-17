@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { COURSES, APPLY_URL } from '../constants';
+import { APPLY_URL } from '../constants';
+import { Course } from '../types';
 import { ChevronDown, Menu, X, ShoppingCart, User } from 'lucide-react';
 
 interface NavbarProps {
   onNavigate: (path: string) => void;
   currentPath: string;
   cartCount: number;
+  courses: Course[];
 }
 
-const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) => {
+const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount, courses }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -54,7 +56,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) =
             {isDropdownOpen && (
               <div className="absolute top-full left-0 w-80 pt-2 animate-in fade-in slide-in-from-top-2 duration-200">
                 <div className="bg-white border border-slate-100 shadow-2xl rounded-2xl p-2 overflow-hidden">
-                  {COURSES.map((course) => (
+                  {courses.map((course) => (
                     <button
                       key={course.id}
                       onClick={() => {
@@ -77,7 +79,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) =
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Cart Button */}
         <button 
           onClick={() => onNavigate('cart')}
           className="relative p-2 text-slate-500 hover:text-black transition-colors"
@@ -90,7 +91,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) =
           )}
         </button>
 
-        {/* Account Button */}
         <button 
           onClick={() => onNavigate('account')}
           className="p-2 text-slate-500 hover:text-black transition-colors"
@@ -113,7 +113,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) =
         </button>
       </div>
 
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-100 p-6 md:hidden flex flex-col gap-4 shadow-xl">
           <button onClick={() => { onNavigate('home'); setIsMenuOpen(false); }} className="text-left text-lg font-medium">Home</button>
@@ -123,7 +122,7 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentPath, cartCount }) =
           <div className="py-2 border-y border-slate-50">
             <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Our Programs</p>
             <div className="grid gap-4">
-              {COURSES.map(course => (
+              {courses.map(course => (
                 <button 
                   key={course.id}
                   onClick={() => { onNavigate(`course-${course.id}`); setIsMenuOpen(false); }}

@@ -1,4 +1,19 @@
 
+export interface CourseVideo {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl?: string; // Supports base64 or external URLs
+}
+
+export interface CourseQuiz {
+  id: string;
+  moduleId?: string; // Links the quiz to a specific Video/Module
+  question: string;
+  options: string[];
+  correct: number;
+}
+
 export interface Course {
   id: string;
   title: string;
@@ -10,6 +25,8 @@ export interface Course {
   }[];
   price: number;
   level: 'Top' | 'Middle' | 'Bottom';
+  videos?: CourseVideo[];
+  quizzes?: CourseQuiz[];
 }
 
 export interface CartItem extends Course {
@@ -21,7 +38,7 @@ export interface User {
   name: string;
   email: string;
   phone: string;
-  password?: string; // Added for Admin Visibility
+  password?: string;
   address?: string;
   isAdmin?: boolean;
 }
@@ -33,6 +50,7 @@ export interface Order {
   userEmail?: string;
   items: Course[];
   total: number;
+  discount?: number;
   date: string;
   status: 'Processing' | 'Shipped' | 'Delivered' | 'Enrolled';
   paymentMethod: string;

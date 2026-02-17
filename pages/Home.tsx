@@ -1,20 +1,20 @@
 
 import React from 'react';
 import { BentoGrid, BentoCard } from '../components/BentoGrid';
-import { COURSES, APPLY_URL } from '../constants';
+import { APPLY_URL } from '../constants';
 import { ArrowRight, Globe, ShieldCheck, Zap, ShoppingCart } from 'lucide-react';
 import { Course, User } from '../types';
 
 interface HomeProps {
   user: User | null;
+  courses: Course[];
   onNavigate: (path: string) => void;
   onAddToCart: (course: Course) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
+const Home: React.FC<HomeProps> = ({ user, courses, onNavigate, onAddToCart }) => {
   return (
     <div className="pt-32 pb-20">
-      {/* Hero Section */}
       <section className="px-6 mb-32">
         <div className="max-w-5xl mx-auto text-center">
           <span className="inline-block px-4 py-1.5 rounded-full bg-slate-50 border border-slate-200 text-xs font-bold tracking-widest text-slate-600 uppercase mb-8">
@@ -43,7 +43,6 @@ const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
         </div>
       </section>
 
-      {/* Mission Section (Top Funnel) */}
       <section className="px-6 mb-32 max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
           <div className="max-w-xl">
@@ -62,7 +61,6 @@ const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
               <p className="text-slate-500 leading-relaxed">Direct alignment with ICC, UCP 600, and SWIFT international protocols used by major tier-1 banks.</p>
             </div>
           </BentoCard>
-
           <BentoCard className="md:col-span-1 min-h-[300px] flex flex-col justify-between">
             <div className="p-4 bg-slate-50 rounded-2xl w-fit">
               <ShieldCheck className="text-black" size={32} />
@@ -72,7 +70,6 @@ const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
               <p className="text-slate-500 leading-relaxed">Our curriculum is built for absolute compliance and readiness for professional certifications.</p>
             </div>
           </BentoCard>
-
           <BentoCard className="md:col-span-1 min-h-[300px] flex flex-col justify-between">
             <div className="p-4 bg-slate-50 rounded-2xl w-fit">
               <Zap className="text-black" size={32} />
@@ -85,7 +82,6 @@ const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
         </BentoGrid>
       </section>
 
-      {/* Course Preview */}
       <section className="px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h2 className="text-5xl font-bold tracking-tight mb-4">Core Ecosystem</h2>
@@ -93,7 +89,7 @@ const Home: React.FC<HomeProps> = ({ user, onNavigate, onAddToCart }) => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {COURSES.map((course) => (
+          {courses.map((course) => (
             <BentoCard 
               key={course.id}
               className="flex flex-col h-full group/card"

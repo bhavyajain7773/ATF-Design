@@ -1,17 +1,17 @@
 
 import React, { useState } from 'react';
 import { Course, Order, User } from '../types';
-import { ShieldCheck, CreditCard, Wallet, Smartphone, Landmark, CheckCircle2 } from 'lucide-react';
-import { ENROLLMENT_PORTAL } from '../constants';
+import { ShieldCheck, CreditCard, Wallet, Smartphone, Landmark, CheckCircle2, ArrowRight } from 'lucide-react';
 
 interface CheckoutPageProps {
   cart: Course[];
   user: User | null;
+  discount: number;
   onCompleteOrder: (order: Order) => void;
   onNavigate: (path: string) => void;
 }
 
-const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder, onNavigate }) => {
+const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, discount, onCompleteOrder, onNavigate }) => {
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
@@ -21,12 +21,19 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
   const [paymentMethod, setPaymentMethod] = useState('Credit Card');
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [lastPurchasedCourseId, setLastPurchasedCourseId] = useState<string | null>(null);
 
   const subtotal = cart.reduce((acc, item) => acc + item.price, 0);
+  const total = Math.max(0, subtotal - discount);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsProcessing(true);
+    
+    // Store the ID before the cart is cleared in the parent component
+    if (cart.length > 0) {
+      setLastPurchasedCourseId(cart[0].id);
+    }
     
     // Simulate secure gateway delay
     setTimeout(() => {
@@ -34,7 +41,8 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
         id: `ATF-${Math.floor(Math.random() * 1000000)}`,
         userId: user?.id || 'guest',
         items: [...cart],
-        total: subtotal,
+        total: total,
+        discount: discount,
         date: new Date().toLocaleDateString(),
         status: 'Enrolled',
         paymentMethod,
@@ -58,21 +66,25 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
           <p className="text-xl text-slate-500 mb-12">Your payment has been processed securely. Welcome to the Academy of Trade Finance.</p>
           
           <div className="bg-slate-50 rounded-[2.5rem] p-10 mb-12 border border-slate-100 text-left">
-            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Enrollment Link</h3>
-            <p className="text-sm text-slate-600 mb-6 leading-relaxed">Please access the official enrollment portal to begin your modules and join the professional community.</p>
-            <a 
-              href={ENROLLMENT_PORTAL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block w-full text-center bg-black text-white py-5 rounded-2xl font-bold hover:bg-slate-800 transition-all mb-4"
+            <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-6">Learning Dashboard</h3>
+            <p className="text-sm text-slate-600 mb-6 leading-relaxed">Your professional modules are now active. You can start your journey into institutional finance immediately.</p>
+            <button 
+              onClick={() => {
+                if (lastPurchasedCourseId) {
+                  onNavigate(`material-${lastPurchasedCourseId}`);
+                } else {
+                  onNavigate('account');
+                }
+              }}
+              className="w-full flex items-center justify-center gap-2 bg-black text-white py-5 rounded-2xl font-bold hover:bg-slate-800 transition-all mb-4 shadow-lg shadow-slate-200"
             >
-              Access Learning Portal
-            </a>
+              Access Learning Portal <ArrowRight size={18} />
+            </button>
             <button 
               onClick={() => onNavigate('account')}
               className="block w-full text-center py-4 text-slate-400 hover:text-black font-bold text-xs uppercase tracking-widest transition-all"
             >
-              View Order History
+              View Profile & History
             </button>
           </div>
         </div>
@@ -81,7 +93,7 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
   }
 
   return (
-    <div className="pt-32 pb-20 px-6 min-h-screen">
+    <div className="pt-32 pb-20 px-6 min-h-screen bg-slate-50/20">
       <div className="max-w-6xl mx-auto">
         <div className="mb-12">
           <h1 className="text-5xl font-extrabold tracking-tighter mb-2">Finalize Enrollment.</h1>
@@ -100,31 +112,31 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Full Name</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Full Name</label>
                   <input 
                     required 
                     type="text" 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5" 
+                    className="w-full px-6 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5" 
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Email Address</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Email Address</label>
                   <input 
                     required 
                     type="email" 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5"
+                    className="w-full px-6 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5"
                     value={formData.email}
                     onChange={(e) => setFormData({...formData, email: e.target.value})}
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Phone Number</label>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 ml-4">Phone Number</label>
                   <input 
                     required 
                     type="tel" 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5"
+                    className="w-full px-6 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
                   />
@@ -173,10 +185,16 @@ const CheckoutPage: React.FC<CheckoutPageProps> = ({ cart, user, onCompleteOrder
                     <span className="font-bold shrink-0">{item.price}Rs</span>
                   </div>
                 ))}
+                {discount > 0 && (
+                  <div className="flex justify-between items-center text-sm text-green-600 font-bold">
+                    <span>Discount</span>
+                    <span>-{discount}Rs</span>
+                  </div>
+                )}
               </div>
               <div className="pt-6 border-t border-slate-100 mb-10 flex justify-between items-end">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Total Amount</span>
-                <span className="text-4xl font-black">{subtotal}Rs</span>
+                <span className="text-4xl font-black">{total}Rs</span>
               </div>
               
               <button 

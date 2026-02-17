@@ -1,16 +1,57 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Course } from '../types';
-import { ShoppingBag, Trash2, ArrowRight } from 'lucide-react';
+import { ShoppingBag, Trash2, ArrowRight, Tag, X } from 'lucide-react';
 
 interface CartPageProps {
   cart: Course[];
   onRemove: (id: string) => void;
   onNavigate: (path: string) => void;
+  discount: number;
+  onApplyDiscount: (amount: number) => void;
 }
 
-const CartPage: React.FC<CartPageProps> = ({ cart, onRemove, onNavigate }) => {
+const CartPage: React.FC<CartPageProps> = ({ cart, onRemove, onNavigate, discount, onApplyDiscount }) => {
+  const [couponCode, setCouponCode] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
   const subtotal = cart.reduce((acc, item) => acc + item.price, 0);
+
+  const handleApplyCoupon = () => {
+    setError('');
+    setSuccess('');
+    const code = couponCode.trim().toUpperCase();
+
+    if (!code) return;
+
+    // Simulated coupon logic
+    if (code === 'ATF10') {
+      const disc = Math.floor(subtotal * 0.1);
+      onApplyDiscount(disc);
+      setSuccess(`ATF10 Applied: 10% Discount (${disc}Rs)`);
+    } else if (code === 'MASTER25') {
+      const disc = Math.floor(subtotal * 0.25);
+      onApplyDiscount(disc);
+      setSuccess(`MASTER25 Applied: 25% Discount (${disc}Rs)`);
+    } else if (code === 'WELCOME5') {
+      const disc = 5;
+      onApplyDiscount(disc);
+      setSuccess(`WELCOME5 Applied: Flat 5Rs Discount`);
+    } else {
+      setError('Invalid coupon code');
+      onApplyDiscount(0);
+    }
+  };
+
+  const clearCoupon = () => {
+    setCouponCode('');
+    onApplyDiscount(0);
+    setSuccess('');
+    setError('');
+  };
+
+  const total = Math.max(0, subtotal - discount);
 
   return (
     <div className="pt-32 pb-20 px-6 min-h-screen">
@@ -61,6 +102,44 @@ const CartPage: React.FC<CartPageProps> = ({ cart, onRemove, onNavigate }) => {
                   </button>
                 </div>
               ))}
+
+              <div className="mt-12 p-8 bg-slate-50 border border-slate-100 rounded-[2rem]">
+                <div className="flex items-center gap-2 text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">
+                  <Tag size={14} /> Coupon Code
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative flex-grow">
+                    <input 
+                      type="text" 
+                      placeholder="Enter code (e.g., ATF10)"
+                      className="w-full px-6 py-4 bg-white border border-slate-100 rounded-2xl focus:ring-2 focus:ring-black/5 font-bold tracking-tight uppercase"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                    />
+                    {discount > 0 && (
+                      <button 
+                        onClick={clearCoupon}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full text-slate-400"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </div>
+                  <button 
+                    onClick={handleApplyCoupon}
+                    className="bg-black text-white px-8 py-4 rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95"
+                  >
+                    Apply
+                  </button>
+                </div>
+                {error && <p className="mt-3 text-red-500 text-xs font-bold px-2">{error}</p>}
+                {success && <p className="mt-3 text-green-600 text-xs font-bold px-2">{success}</p>}
+                
+                <div className="mt-6 flex flex-wrap gap-2">
+                  <button onClick={() => setCouponCode('ATF10')} className="text-[10px] font-bold text-slate-400 hover:text-black border border-slate-200 px-3 py-1 rounded-full uppercase tracking-widest">ATF10</button>
+                  <button onClick={() => setCouponCode('MASTER25')} className="text-[10px] font-bold text-slate-400 hover:text-black border border-slate-200 px-3 py-1 rounded-full uppercase tracking-widest">MASTER25</button>
+                </div>
+              </div>
             </div>
 
             <div className="lg:col-span-1">
@@ -71,13 +150,19 @@ const CartPage: React.FC<CartPageProps> = ({ cart, onRemove, onNavigate }) => {
                     <span className="text-slate-500">Subtotal</span>
                     <span>{subtotal}Rs</span>
                   </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-sm font-medium text-green-600">
+                      <span>Discount</span>
+                      <span>-{discount}Rs</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm font-medium">
                     <span className="text-slate-500">Service Fee</span>
                     <span>0Rs</span>
                   </div>
                   <div className="pt-4 border-t border-slate-200 flex justify-between items-end">
                     <span className="text-xs font-bold uppercase tracking-widest">Total</span>
-                    <span className="text-3xl font-black">{subtotal}Rs</span>
+                    <span className="text-3xl font-black">{total}Rs</span>
                   </div>
                 </div>
                 <button 
