@@ -22,7 +22,7 @@ const App: React.FC = () => {
   const [registeredUsers, setRegisteredUsers] = useState<User[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
 
-  // BOOTSTRAP: Load persistence layer with deep merging
+  // BOOTSTRAP: Load persistence layer with deep merging & strict validation
   useEffect(() => {
     try {
       const savedCart = localStorage.getItem('atf_cart');
@@ -31,40 +31,63 @@ const App: React.FC = () => {
       const savedUsersList = localStorage.getItem('atf_users_list');
       const savedCourses = localStorage.getItem('atf_courses');
 
-      // 1. Restore Students & Orders (Pure persistence)
-      if (savedCart) setCart(JSON.parse(savedCart));
-      if (savedUser) setUser(JSON.parse(savedUser));
-      if (savedOrders) setOrders(JSON.parse(savedOrders));
-      if (savedUsersList) setRegisteredUsers(JSON.parse(savedUsersList));
-
-      // 2. Intelligent Course Merging
-      // This prevents "Content Manager" data from being erased by code updates
-      if (savedCourses) {
-        const parsedSavedCourses = JSON.parse(savedCourses) as Course[];
-        const mergedCourses = INITIAL_COURSES.map(initial => {
-          const saved = parsedSavedCourses.find(s => s.id === initial.id);
-          // If we have a saved version, keep the Admin's videos/quizzes
-          return saved ? { ...initial, ...saved } : initial;
-        });
-        setCourses(mergedCourses);
-      } else {
-        setCourses(INITIAL_COURSES);
+      if (savedCart) {
+        const parsed = JSON.parse(savedCart);
+        if (Array.isArray(parsed)) setCart(parsed);
       }
+      
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed && typeof parsed === 'object') setUser(parsed);
+      }
+      
+      if (savedOrders) {
+        const parsed = JSON.parse(savedOrders);
+        if (Array.isArray(parsed)) setOrders(parsed);
+      }
+      
+      if (savedUsersList) {
+        const parsed = JSON.parse(savedUsersList);
+        if (Array.isArray(parsed)) setRegisteredUsers(parsed);
+      }
+
+      let baseCourses = INITIAL_COURSES;
+      if (savedCourses) {
+        const parsedSavedCourses = JSON.parse(savedCourses);
+        if (Array.isArray(parsedSavedCourses)) {
+          baseCourses = INITIAL_COURSES.map(initial => {
+            const saved = parsedSavedCourses.find((s: Course) => s.id === initial.id);
+            return saved ? { ...initial, ...saved } : initial;
+          });
+        }
+      }
+      setCourses(baseCourses);
     } catch (e) {
-      console.error("Critical Recovery Failure: Data may be corrupted.", e);
+      console.error("Critical Recovery Failure:", e);
       setCourses(INITIAL_COURSES);
     }
   }, []);
 
-  // PERSISTENCE SYNC (Triggered on every state change)
-  useEffect(() => { localStorage.setItem('atf_cart', JSON.stringify(cart)); }, [cart]);
+  // SAFE PERSISTENCE SYNC
+  const safeSave = (key: string, value: any) => {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (e) {
+      console.error(`Storage Error for ${key}:`, e);
+      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
+        alert("Storage Limit Exceeded: The video file you uploaded is too large to be saved permanently in this browser. It will work during this session, but may disappear after refresh.");
+      }
+    }
+  };
+
+  useEffect(() => { safeSave('atf_cart', cart); }, [cart]);
   useEffect(() => {
-    if (user) localStorage.setItem('atf_user', JSON.stringify(user));
+    if (user) safeSave('atf_user', user);
     else localStorage.removeItem('atf_user');
   }, [user]);
-  useEffect(() => { localStorage.setItem('atf_orders', JSON.stringify(orders)); }, [orders]);
-  useEffect(() => { localStorage.setItem('atf_users_list', JSON.stringify(registeredUsers)); }, [registeredUsers]);
-  useEffect(() => { localStorage.setItem('atf_courses', JSON.stringify(courses)); }, [courses]);
+  useEffect(() => { safeSave('atf_orders', orders); }, [orders]);
+  useEffect(() => { safeSave('atf_users_list', registeredUsers); }, [registeredUsers]);
+  useEffect(() => { safeSave('atf_courses', courses); }, [courses]);
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [currentPath]);
 
@@ -73,14 +96,16 @@ const App: React.FC = () => {
       setCurrentPath('account');
       return;
     }
-    if (!cart.some(item => item.id === course.id)) {
-      setCart([...cart, course]);
+    const currentCart = Array.isArray(cart) ? cart : [];
+    if (!currentCart.some(item => item.id === course.id)) {
+      setCart([...currentCart, course]);
     }
     setCurrentPath('cart');
   };
 
   const handleRemoveFromCart = (id: string) => {
-    const newCart = cart.filter(item => item.id !== id);
+    const currentCart = Array.isArray(cart) ? cart : [];
+    const newCart = currentCart.filter(item => item.id !== id);
     setCart(newCart);
     if (newCart.length === 0) setDiscount(0);
   };
@@ -91,39 +116,25 @@ const App: React.FC = () => {
       userName: user?.name,
       userEmail: user?.email
     };
-    setOrders(prev => [enhancedOrder, ...prev]);
+    setOrders(prev => Array.isArray(prev) ? [enhancedOrder, ...prev] : [enhancedOrder]);
     setCart([]);
     setDiscount(0);
   };
 
   const handleRegister = (newUser: User) => {
-    const exists = registeredUsers.find(u => u.email === newUser.email);
+    const usersList = Array.isArray(registeredUsers) ? registeredUsers : [];
+    const exists = usersList.find(u => u.email === newUser.email);
     if (exists) return { success: false, message: "This email is already registered." };
-    
-    setRegisteredUsers(prev => [...prev, newUser]);
+    setRegisteredUsers(prev => Array.isArray(prev) ? [...prev, newUser] : [newUser]);
     setUser(newUser);
     return { success: true };
   };
 
   const handleLogin = (email: string, pass: string) => {
-    const foundUser = registeredUsers.find(u => u.email === email);
-    
-    // Check if user exists at all
-    if (!foundUser) {
-      return { 
-        success: false, 
-        message: "No account found with this email. Please Register first." 
-      };
-    }
-    
-    // Check password integrity
-    if (foundUser.password !== pass) {
-      return { 
-        success: false, 
-        message: "Incorrect password. Please try again." 
-      };
-    }
-    
+    const usersList = Array.isArray(registeredUsers) ? registeredUsers : [];
+    const foundUser = usersList.find(u => u.email === email);
+    if (!foundUser) return { success: false, message: "No account found." };
+    if (foundUser.password !== pass) return { success: false, message: "Incorrect password." };
     setUser(foundUser);
     return { success: true };
   };
@@ -152,28 +163,31 @@ const App: React.FC = () => {
   };
 
   const purgeDatabase = () => {
-    if (window.confirm("CRITICAL: Erase all student data, orders, and content manager updates? This cannot be undone.")) {
+    if (window.confirm("CRITICAL: Erase all data?")) {
       setOrders([]);
       setRegisteredUsers([]);
       setCart([]);
       setDiscount(0);
       setCourses(INITIAL_COURSES);
       localStorage.clear();
-      alert("Institutional Database has been cleared.");
+      alert("Database cleared.");
     }
   };
 
   const updateCourse = (updatedCourse: Course) => {
-    setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
+    setCourses(prev => {
+      const arr = Array.isArray(prev) ? prev : INITIAL_COURSES;
+      return arr.map(c => c.id === updatedCourse.id ? updatedCourse : c);
+    });
   };
 
   const renderPage = () => {
     if (currentPath === 'admin' && user?.isAdmin) {
       return (
         <AdminDashboard 
-          orders={orders} 
-          users={registeredUsers}
-          courses={courses}
+          orders={Array.isArray(orders) ? orders : []} 
+          users={Array.isArray(registeredUsers) ? registeredUsers : []}
+          courses={Array.isArray(courses) ? courses : INITIAL_COURSES}
           onUpdateCourse={updateCourse}
           onNavigate={setCurrentPath} 
           onLogout={handleLogout} 
@@ -185,12 +199,12 @@ const App: React.FC = () => {
     if (currentPath === 'home') return <Home user={user} courses={courses} onNavigate={setCurrentPath} onAddToCart={handleAddToCart} />;
     if (currentPath === 'about') return <About />;
     if (currentPath === 'contact') return <Contact />;
-    if (currentPath === 'cart') return <CartPage cart={cart} onRemove={handleRemoveFromCart} onNavigate={setCurrentPath} discount={discount} onApplyDiscount={setDiscount} />;
-    if (currentPath === 'checkout') return <CheckoutPage cart={cart} user={user} discount={discount} onCompleteOrder={handleCompleteOrder} onNavigate={setCurrentPath} />;
+    if (currentPath === 'cart') return <CartPage cart={Array.isArray(cart) ? cart : []} onRemove={handleRemoveFromCart} onNavigate={setCurrentPath} discount={discount} onApplyDiscount={setDiscount} />;
+    if (currentPath === 'checkout') return <CheckoutPage cart={Array.isArray(cart) ? cart : []} user={user} discount={discount} onCompleteOrder={handleCompleteOrder} onNavigate={setCurrentPath} />;
     if (currentPath === 'account') return (
       <AccountPage 
         user={user} 
-        orders={orders.filter(o => o.userEmail === user?.email)} 
+        orders={Array.isArray(orders) ? orders.filter(o => o.userEmail === user?.email) : []} 
         onLogin={handleLogin} 
         onRegister={handleRegister}
         onLogout={handleLogout}
@@ -225,25 +239,7 @@ const App: React.FC = () => {
           <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16">
             <div className="max-w-sm">
               <h2 className="text-4xl font-extrabold tracking-tighter mb-6">ATF.</h2>
-              <p className="text-slate-400 font-medium leading-relaxed">Academy of Trade Finance. A premier institutional bridge for masters of global capital.</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-16">
-              <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-6">Explore</h4>
-                <ul className="space-y-3 text-sm font-semibold text-slate-600">
-                  <li><button onClick={() => setCurrentPath('home')} className="hover:text-black">Catalog</button></li>
-                  <li><button onClick={() => setCurrentPath('about')} className="hover:text-black">Methodology</button></li>
-                  <li><button onClick={() => setCurrentPath('account')} className="hover:text-black">Student Portal</button></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-300 mb-6">Governance</h4>
-                <ul className="space-y-3 text-sm font-semibold text-slate-600">
-                  <li>Privacy Protocols</li>
-                  <li>Terms of Mastery</li>
-                  <li><button onClick={() => setCurrentPath('account')} className="text-slate-300 hover:text-black transition-colors">Admin Hub</button></li>
-                </ul>
-              </div>
+              <p className="text-slate-400 font-medium leading-relaxed">Academy of Trade Finance.</p>
             </div>
           </div>
         </footer>
